@@ -472,7 +472,7 @@ crud () {
         create)
             if [ -n "$content" ]; then
                 tmpfile="$tmpdir/data.json"
-                echo "{$data,\"$content_type\":" > "$tmpfile"
+                echo "{${data}${data:+,}\"$content_type\":" > "$tmpfile"
                 "$jq" "${jq_json_escape_options[@]}" . "$content" >> "$tmpfile"
                 echo "}" >> "$tmpfile"
                 post $branch --json "@$tmpdir/data.json"
@@ -493,7 +493,7 @@ crud () {
         update)
             if [ -n "$content" ]; then
                 tmpfile="$tmpdir/data.json"
-                echo "{$data,\"$content_type\":" > "$tmpfile"
+                echo "{${data}${data:+,}\"$content_type\":" > "$tmpfile"
                 "$jq" "${jq_json_escape_options[@]}" . "$content" >> "$tmpfile"
                 echo "}" >> "$tmpfile"
                 put $branch "$id" --json "@$tmpdir/data.json"

@@ -9,6 +9,11 @@ via [PinkFreud/bs](https://github.com/PinkFreud/bs).
 
 ## [Unreleased]
 
+### Fixed
+- Malformed JSON in `pages`/`chapters`/`books` create/update when `-m`/`-h`
+  is given without `-n`/`-d`/`-t`. The comma between `$data` and
+  `$content_type` is now only included when `$data` is non-empty.
+
 ## [0.0.3] - PinkFreud/bs
 
 ### Fixed
