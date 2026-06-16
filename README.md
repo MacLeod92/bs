@@ -6,6 +6,8 @@ This is _bs_, a command line client for the BookStack wiki engine. It
 enables easy command line access to all exported API functions and as
 such can be used to automate content and user management.
 
+This is a fork of [Yetangitu/bs](https://github.com/Yetangitu/bs), via [PinkFreud/bs](https://github.com/PinkFreud/bs), maintained at [MacLeod92/bs](https://github.com/MacLeod92/bs).
+
 
 ## EXTERNAL DEPENDENCIES
 
@@ -89,6 +91,14 @@ supported in _bs_:
 
     list, restore, destroy
 
+### section
+
+    read, update
+
+    Not a BookStack API endpoint as such -- a local convenience command
+    for extracting and replacing a single section (by heading) from a
+    page's markdown. See API_OPTIONS and EXAMPLES below.
+
 
 ## API_OPTIONS
 
@@ -153,6 +163,27 @@ to learn which parameters are available. Use these options for:
                 Count value is taken as a suggestion only,
                 see API documentation [1]
 
+    section read, section update (common options):
+
+    -i ID       Page ID
+    -S HEADING  Heading to match, including leading '#'s, e.g.
+                "## Notes". Must match the heading line exactly
+                (aside from trailing whitespace). Matching is
+                fence-aware: headings inside fenced code blocks
+                (```...```) are ignored. The section ends at the
+                next heading of the same or shallower level, or
+                at the end of the page.
+    -w          Include the heading line in read output / update
+                input. Without -w (the default), read returns only
+                the section body and update replaces only the body,
+                leaving the heading in the page unchanged.
+
+    section update only:
+
+    -m MARKDOWN Replacement content for the section. Without -w
+                this is the body only; with -w the first line must
+                be the (possibly modified) heading.
+                Use @/path/to/file.md to read content from a file.
 
 ## OUTPUT
 
@@ -255,6 +286,22 @@ List the first 500 books on host `remote_library` as seen by user `guest`
 Edit the _bs_ config file
 
     bs config
+
+Read just the "## Notes" section of a page's markdown
+
+    bs section read -i 5665 -S "## Notes"
+
+Read the "## Notes" section including the heading line
+
+    bs section read -w -i 5665 -S "## Notes"
+
+Replace the "## Notes" section body from a file
+
+    bs section update -i 5665 -S "## Notes" -m @/tmp/notes.md
+
+Replace the "## Notes" section including renaming the heading
+
+    bs section update -w -i 5665 -S "## Notes" -m @/tmp/notes.md
 
 ---
 

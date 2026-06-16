@@ -9,6 +9,16 @@ via [PinkFreud/bs](https://github.com/PinkFreud/bs).
 
 ## [Unreleased]
 
+## [0.1.0] - MacLeod92/bs
+
+### Added
+- New `section update` subcommand to replace a single section by heading in a page's markdown.
+- `-w` flag for `section read` and `section update` to include the heading line in output/input. Without `-w` (the default), the heading is excluded from read output and left unchanged by update.
+
+### Fixed
+- `section update` was failing with "required parameter(s) missing: id" due to `OPTIND` not being reset before `crud()` was called. `crud()` now resets `OPTIND=1` on entry.
+- `section read` now exits with an error if the section is not found, rather than silently returning nothing.
+
 ## [0.0.4] - MacLeod92/bs
 
 ### Fixed
@@ -39,6 +49,7 @@ via [PinkFreud/bs](https://github.com/PinkFreud/bs).
 ### Added
 - Initial release.
 
+[0.1.0]: https://github.com/MacLeod92/bs/compare/v0.0.4...v0.1.0
 [0.0.4]: https://github.com/MacLeod92/bs/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/MacLeod92/bs/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/MacLeod92/bs/compare/v0.0.1...v0.0.2

@@ -73,7 +73,7 @@ main () {
             a_s_u $target "$@"
             ;;
 
-        docs|search|recycle-bin)
+        docs|search|recycle-bin|section)
             $target "$@"
             ;;
 
@@ -164,6 +164,105 @@ docs () {
 
         *)
             exit_with_error "unknown API endpoint for $branch: $endpoint"
+            ;;
+    esac
+}
+
+section () {
+    unset id heading newfile withheading
+    branch="pages"
+    endpoint="$1"
+    shift
+
+    while getopts "i:S:m:w" OPTION
+    do
+        case "$OPTION" in
+            i) id="$OPTARG" ;;
+            S) heading="$OPTARG" ;;
+            w) withheading=1 ;;
+            m)
+                if [ "${OPTARG:0:1}" == "@" -a -r "${OPTARG:1}" ]; then
+                    newfile="${OPTARG:1}"
+                else
+                    newfile="$tmpdir/section_new.md"
+                    printf '%s' "$OPTARG" > "$newfile"
+                fi
+                ;;
+            *) exit_with_error "unknown parameter for section/$endpoint: $OPTION" ;;
+        esac
+    done
+
+    [ -z "$id" ] && exit_with_error "required parameter(s) missing: id"
+    [ -z "$heading" ] && exit_with_error "required parameter(s) missing: section"
+
+    case "$endpoint" in
+        read)
+            get $branch "$id" | "$jq" -r '.markdown' | awk -v section="$heading" -v withheading="${withheading:-0}" '
+                /^```/ {
+                    infence = !infence
+                    if (found) print
+                    next
+                }
+                infence {
+                    if (found) print
+                    next
+                }
+                /^#+[[:space:]]/ {
+                    match($0, /^#+/); hlevel = RLENGTH
+                    if (found && hlevel <= level) exit
+                    if (index($0, section) == 1) { rest = substr($0, length(section) + 1); if (rest ~ /^[ \t\r]*$/) { found = 1; ever_found = 1; level = hlevel; if (withheading) print; next } }
+                }
+                found { print }
+                END { exit (ever_found ? 0 : 1) }
+            ' || exit_with_error "section not found: $heading"
+            ;;
+
+        update)
+            [ -z "$newfile" ] && exit_with_error "required parameter(s) missing: markdown"
+
+            origfile="$tmpdir/section_orig.md"
+            newdoc="$tmpdir/section_doc.md"
+
+            get $branch "$id" | "$jq" -r '.markdown' > "$origfile"
+
+            awk -v section="$heading" -v newfile="$newfile" -v withheading="${withheading:-0}" '
+                /^```/ {
+                    infence = !infence
+                    if (found) next
+                    print
+                    next
+                }
+                infence {
+                    if (found) next
+                    print
+                    next
+                }
+                /^#+[[:space:]]/ {
+                    match($0, /^#+/); hlevel = RLENGTH
+                    if (found && hlevel <= level) {
+                        found = 0
+                    } else if (!found && index($0, section) == 1) {
+                        rest = substr($0, length(section) + 1)
+                        if (rest ~ /^[ \t\r]*$/) {
+                            found = 1
+                            ever_found = 1
+                            level = hlevel
+                            if (!withheading) print
+                            while ((getline line < newfile) > 0) print line
+                            next
+                        }
+                    }
+                }
+                found { next }
+                { print }
+                END { exit (ever_found ? 0 : 1) }
+            ' "$origfile" > "$newdoc" || exit_with_error "section not found: $heading"
+
+            crud "$branch" update -i "$id" -m "@$newdoc"
+            ;;
+
+        *)
+            exit_with_error "unknown API endpoint for section: $endpoint"
             ;;
     esac
 }
@@ -283,6 +382,7 @@ crud () {
     unset data
     unset fdata
     tagcount=0
+    OPTIND=1
     bookcount=0
     branch="$1"
     endpoint="$2"
